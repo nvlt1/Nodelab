@@ -100,10 +100,20 @@ app.get('/members', (req, res) => {
         `;
         res.send(html);
 
-    }else{
-        res.send("Your need to log in first!");
-        res.redirect('/login');
     }
+    if (!req.session.authenticated){
+        var html = `
+        Log in first!
+        <form action='/' method='get'>
+        <button>go back</button>
+        </form>
+        `;
+        res.send(html);
+    }
+    // else{
+    //     res.send("Your need to log in first!");
+    //     res.redirect('/login');
+    // }
 });
 
 app.post('/logout', (req, res) => {
