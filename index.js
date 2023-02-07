@@ -1,24 +1,36 @@
 const express = require('express');
+require('dotenv').config();
 const session = require('express-session');
 const bcrypt = require('bcrypt');
 const saltRounds = 12;
+const MongoStore = require('connect-mongo');
 const port = process.env.PORT || 3000;
 const app = express();
-const expireTime = 48 * 60 * 60 * 1000 // expires after 1 day (hours * minutes * seconds * milliseconds)
+const expireTime = 60 * 60 * 1000 // expires after 1 hour (hours * minutes * seconds * milliseconds)
 
 app.use(express.urlencoded({extended: false}))
 // users and passwords (in memory 'database)
 var users = [];
 
 
-/* session secrets*/
-const node_session_secret = "0299b95a-8963-479d-a4f8-1cd7752299b8";
+/* secret information section*/
+const mongodb_user = process.env.MONGODB_USER;
+const mongodb_password = process.env.MONGODB_PASSWORD;
+const mongodb_session_secret = process.env.MONGODB_SESSION_SECRET;
+const node_session_secret = process.env.NODE_SESSION_SECRET;
+/* END secret section*/
 
-/* end secrets */
-
+var mongoStore = MongoStore.create({
+    // need to give admin privileges and ensure the correct user and password.
+	mongoUrl : `mongodb+srv://${mongodb_user}:${mongodb_password}@atlascluster.oqysggr.mongodb.net/?retryWrites=true&w=majority`,
+    crypto: {
+        secret: mongodb_session_secret
+    }
+})
+console.log(mongodb_user, mongodb_password, mongodb_session_secret, node_session_secret);
 app.use(session({
     secret: node_session_secret,
-    // store: mongoStore, // default is memory store
+    store: mongoStore, // default is memory store
     saveUninitialized: false,
     resave: true
 }));
@@ -110,10 +122,6 @@ app.get('/members', (req, res) => {
         `;
         res.send(html);
     }
-    // else{
-    //     res.send("Your need to log in first!");
-    //     res.redirect('/login');
-    // }
 });
 
 app.post('/logout', (req, res) => {
